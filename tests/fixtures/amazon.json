@@ -1,0 +1,54 @@
+{
+  "searchResult": {
+    "items": [
+      {
+        "asin": "B0ETB12345",
+        "detailPageURL": "https://www.amazon.com/dp/B0ETB12345",
+        "images": {
+          "primary": {
+            "medium": {
+              "url": "https://m.media-amazon.com/images/I/etb.jpg"
+            }
+          }
+        },
+        "itemInfo": {
+          "title": {
+            "displayValue": "Pokemon TCG Elite Trainer Box"
+          }
+        },
+        "offersV2": {
+          "listings": [
+            {
+              "isBuyBoxWinner": false,
+              "availability": {"type": "OUT_OF_STOCK"},
+              "price": {"money": {"amount": 80.0, "currency": "USD"}}
+            },
+            {
+              "isBuyBoxWinner": true,
+              "availability": {"type": "IN_STOCK"},
+              "price": {"money": {"amount": 49.99, "currency": "USD"}}
+            }
+          ]
+        }
+      },
+      {
+        "asin": "B0TIN12345",
+        "detailPageURL": "https://www.amazon.com/dp/B0TIN12345",
+        "itemInfo": {
+          "title": {
+            "displayValue": "Pokemon TCG Tin"
+          }
+        },
+        "offersV2": {
+          "listings": [
+            {
+              "isBuyBoxWinner": true,
+              "availability": {"type": "OUT_OF_STOCK"},
+              "price": {"money": {"amount": 19.99, "currency": "USD"}}
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

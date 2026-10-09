@@ -1,0 +1,20 @@
+{
+  "products": [
+    {
+      "sku": 6501234,
+      "name": "Pokemon Trading Card Game Elite Trainer Box",
+      "salePrice": 49.99,
+      "url": "https://www.bestbuy.com/site/pokemon-elite-trainer-box/6501234.p",
+      "image": "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6501/6501234_sd.jpg",
+      "onlineAvailability": true
+    },
+    {
+      "sku": 6505678,
+      "name": "Pokemon Trading Card Game Booster Bundle",
+      "salePrice": 26.99,
+      "url": "https://www.bestbuy.com/site/pokemon-booster-bundle/6505678.p",
+      "image": "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6505/6505678_sd.jpg",
+      "onlineAvailability": false
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+# Seconds between scans of each store. Values under 60 are raised to 60.
+poll_seconds: 180
+
+# Skip cheap accessories. Omit price_max to allow any higher price.
+price_min: 10
+
+keywords:
+  - elite trainer box
+  - booster bundle
+  - booster box
+  - ultra premium collection
+  - collection box
+  - tin
+
+exclude:
+  - plush
+  - shirt
+  - hoodie
+  - hat
+  - funko
+  - puzzle
+  - poster
+
+stores:
+  bestbuy: true
+  amazon: true
+  pokemoncenter: true
+  target: true
+  walmart: true
+
+database: data/state.db
