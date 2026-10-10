@@ -1,6 +1,5 @@
 import re
 
-
 _OUT_OF_STOCK = ("out of stock", "sold out", "unavailable", "not available")
 _IN_STOCK = ("in stock", "in stock scarce", "pre order", "preorder", "add to cart", "available now")
 

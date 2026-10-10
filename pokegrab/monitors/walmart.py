@@ -4,8 +4,8 @@ from pokegrab.models import Product
 from pokegrab.monitors.base import BlockedPage
 from pokegrab.monitors.pages import (
     PageMonitor,
-    extract_next_data,
     card_regions,
+    extract_next_data,
     image_from_regions,
     is_blocked,
     price_from_window,
