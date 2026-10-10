@@ -12,6 +12,13 @@ class DiscordNotifier:
     def __init__(self, webhook_url: str):
         self.webhook_url = webhook_url
 
+    async def notify(self, client: httpx.AsyncClient, message: str) -> None:
+        if not self.webhook_url:
+            return
+        response = await client.post(self.webhook_url, json={"content": message})
+        if response.status_code >= 400:
+            raise RuntimeError(f"Discord webhook returned {response.status_code}")
+
     async def send(self, client: httpx.AsyncClient, product: Product) -> None:
         if not self.webhook_url:
             logger.warning("Discord webhook is not set; restock for %s was not posted", product.name)

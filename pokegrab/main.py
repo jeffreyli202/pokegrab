@@ -95,12 +95,17 @@ async def run(settings: Settings | None = None) -> None:
         raise SystemExit("No stores are enabled.")
     if not settings.discord_webhook_url:
         logger.warning("DISCORD_WEBHOOK_URL is empty; scans will run but alerts will not post")
+    store_list = ", ".join(m.name for m in monitors)
     async with httpx.AsyncClient(
         timeout=httpx.Timeout(20.0),
         headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/json"},
         follow_redirects=True,
     ) as client:
-        await asyncio.gather(*(_poll_forever(monitor, client, state, settings, notifier) for monitor in monitors))
+        await notifier.notify(client, f"👋 Pokegrab is online! Monitoring: {store_list}!")
+        try:
+            await asyncio.gather(*(_poll_forever(monitor, client, state, settings, notifier) for monitor in monitors))
+        finally:
+            await notifier.notify(client, "🔴 Pokegrab is going offline.")
 
 
 def main() -> None:
