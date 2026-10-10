@@ -1,0 +1,10 @@
+services:
+  pokegrab:
+    build: .
+    env_file: .env
+    volumes:
+      - pokegrab-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  pokegrab-data:
