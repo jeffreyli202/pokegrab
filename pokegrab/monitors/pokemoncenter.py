@@ -3,7 +3,6 @@ import re
 from pokegrab.models import Product
 from pokegrab.monitors.base import BlockedPage
 from pokegrab.monitors.pages import (
-    PageMonitor,
     card_regions,
     extract_next_data,
     image_from_regions,
@@ -15,6 +14,11 @@ from pokegrab.monitors.pages import (
 )
 from pokegrab.parsing import parse_price, stock_from_status
 
+try:
+    from pokegrab.monitors.playwright_page import PlaywrightPageMonitor as _Base
+except ImportError:
+    from pokegrab.monitors.pages import PageMonitor as _Base  # type: ignore[assignment]
+
 _PRODUCT_HREF = re.compile(
     r'href="(?:https://www\.pokemoncenter\.com)?(/product/([^/"#?]+)/[^"]*)"',
     re.IGNORECASE,
@@ -22,7 +26,7 @@ _PRODUCT_HREF = re.compile(
 _PRODUCT_FIELDS = {"price", "available", "inStock", "availability", "image", "images", "slug"}
 
 
-class PokemonCenterMonitor(PageMonitor):
+class PokemonCenterMonitor(_Base):
     name = "pokemoncenter"
     url_template = "https://www.pokemoncenter.com/search?q={query}"
 

@@ -1,5 +1,5 @@
 # Seconds between scans of each store. Values under 60 are raised to 60.
-poll_seconds: 60
+poll_seconds: 120
 
 # Skip cheap accessories. Omit price_max to allow any higher price.
 price_min: 10

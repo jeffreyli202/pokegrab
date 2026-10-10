@@ -3,7 +3,6 @@ import re
 from pokegrab.models import Product
 from pokegrab.monitors.base import BlockedPage
 from pokegrab.monitors.pages import (
-    PageMonitor,
     card_regions,
     extract_next_data,
     image_from_regions,
@@ -15,13 +14,18 @@ from pokegrab.monitors.pages import (
 )
 from pokegrab.parsing import parse_price, stock_from_status
 
+try:
+    from pokegrab.monitors.playwright_page import PlaywrightPageMonitor as _Base
+except ImportError:
+    from pokegrab.monitors.pages import PageMonitor as _Base  # type: ignore[assignment]
+
 _PRODUCT_HREF = re.compile(
     r'href="(?:https://www\.walmart\.com)?(/ip/[^"]+/(\d+))"',
     re.IGNORECASE,
 )
 
 
-class WalmartMonitor(PageMonitor):
+class WalmartMonitor(_Base):
     name = "walmart"
     url_template = "https://www.walmart.com/search?q={query}"
 
