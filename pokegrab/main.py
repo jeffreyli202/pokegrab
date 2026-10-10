@@ -34,9 +34,7 @@ def build_monitors(settings: Settings) -> list[Monitor]:
                 )
             )
         else:
-            logger.warning(
-                "Amazon skipped: set AMAZON_CREDENTIAL_ID, AMAZON_CREDENTIAL_SECRET, and AMAZON_PARTNER_TAG"
-            )
+            logger.warning("Amazon skipped: set AMAZON_CREDENTIAL_ID, AMAZON_CREDENTIAL_SECRET, and AMAZON_PARTNER_TAG")
     if settings.stores.get("pokemoncenter"):
         monitors.append(PokemonCenterMonitor())
     if settings.stores.get("target"):
@@ -47,9 +45,7 @@ def build_monitors(settings: Settings) -> list[Monitor]:
 
 
 def _amazon_ready(settings: Settings) -> bool:
-    return bool(
-        settings.amazon_credential_id and settings.amazon_credential_secret and settings.amazon_partner_tag
-    )
+    return bool(settings.amazon_credential_id and settings.amazon_credential_secret and settings.amazon_partner_tag)
 
 
 async def handle_scan(
@@ -104,9 +100,7 @@ async def run(settings: Settings | None = None) -> None:
         headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/json"},
         follow_redirects=True,
     ) as client:
-        await asyncio.gather(
-            *(_poll_forever(monitor, client, state, settings, notifier) for monitor in monitors)
-        )
+        await asyncio.gather(*(_poll_forever(monitor, client, state, settings, notifier) for monitor in monitors))
 
 
 def main() -> None:

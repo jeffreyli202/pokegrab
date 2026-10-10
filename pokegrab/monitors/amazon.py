@@ -113,7 +113,7 @@ def parse_amazon_payload(payload: dict) -> list[Product]:
         if listing:
             money = (listing.get("price") or {}).get("money") or {}
             price = parse_price(money.get("amount"))
-        image = ((((item.get("images") or {}).get("primary") or {}).get("medium") or {}).get("url"))
+        image = (((item.get("images") or {}).get("primary") or {}).get("medium") or {}).get("url")
         url = item.get("detailPageURL") or f"https://www.amazon.com/dp/{asin}"
         products.append(
             Product(
