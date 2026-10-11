@@ -8,6 +8,7 @@ from pokegrab.discord import DiscordNotifier
 from pokegrab.monitors.amazon import AmazonMonitor
 from pokegrab.monitors.base import USER_AGENT, Monitor, MonitorError
 from pokegrab.monitors.bestbuy import BestBuyMonitor
+from pokegrab.monitors.ebay import EbayMonitor
 from pokegrab.monitors.pokemoncenter import PokemonCenterMonitor
 from pokegrab.monitors.target import TargetMonitor
 from pokegrab.monitors.walmart import WalmartMonitor
@@ -41,6 +42,11 @@ def build_monitors(settings: Settings) -> list[Monitor]:
         monitors.append(TargetMonitor())
     if settings.stores.get("walmart"):
         monitors.append(WalmartMonitor())
+    if settings.stores.get("ebay"):
+        if settings.ebay_client_id and settings.ebay_client_secret:
+            monitors.append(EbayMonitor(settings.ebay_client_id, settings.ebay_client_secret, settings.price_max))
+        else:
+            logger.warning("eBay skipped: set EBAY_CLIENT_ID and EBAY_CLIENT_SECRET")
     return monitors
 
 

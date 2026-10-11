@@ -1,0 +1,19 @@
+{
+  "total": 2,
+  "itemSummaries": [
+    {
+      "itemId": "v1|123456789|0",
+      "title": "Pokemon TCG Elite Trainer Box Scarlet Violet NEW SEALED",
+      "price": { "value": "49.99", "currency": "USD" },
+      "itemWebUrl": "https://www.ebay.com/itm/123456789",
+      "image": { "imageUrl": "https://example.com/etb.jpg" }
+    },
+    {
+      "itemId": "v1|987654321|0",
+      "title": "Pokemon TCG Booster Bundle Factory Sealed",
+      "price": { "value": "24.99", "currency": "USD" },
+      "itemWebUrl": "https://www.ebay.com/itm/987654321",
+      "image": { "imageUrl": "https://example.com/bundle.jpg" }
+    }
+  ]
+}

@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 
-STORE_NAMES = ("bestbuy", "amazon", "pokemoncenter", "target", "walmart")
+STORE_NAMES = ("bestbuy", "amazon", "pokemoncenter", "target", "walmart", "ebay")
 MIN_POLL_SECONDS = 60
 
 
@@ -24,6 +24,8 @@ class Settings:
     amazon_credential_secret: str
     amazon_partner_tag: str
     amazon_credential_version: str
+    ebay_client_id: str
+    ebay_client_secret: str
 
 
 def load_settings(path: Path | None = None, *, load_env: bool = True) -> Settings:
@@ -64,6 +66,8 @@ def load_settings(path: Path | None = None, *, load_env: bool = True) -> Setting
         amazon_credential_secret=os.environ.get("AMAZON_CREDENTIAL_SECRET", "").strip(),
         amazon_partner_tag=os.environ.get("AMAZON_PARTNER_TAG", "").strip(),
         amazon_credential_version=os.environ.get("AMAZON_CREDENTIAL_VERSION", "3.1").strip() or "3.1",
+        ebay_client_id=os.environ.get("EBAY_CLIENT_ID", "").strip(),
+        ebay_client_secret=os.environ.get("EBAY_CLIENT_SECRET", "").strip(),
     )
 
 

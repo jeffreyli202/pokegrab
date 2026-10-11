@@ -7,6 +7,7 @@ import httpx
 from pokegrab.monitors.amazon import AmazonMonitor, parse_amazon_payload
 from pokegrab.monitors.base import BlockedPage
 from pokegrab.monitors.bestbuy import BestBuyMonitor, parse_bestbuy_payload
+from pokegrab.monitors.ebay import EbayMonitor, parse_ebay_payload
 from pokegrab.monitors.pokemoncenter import PokemonCenterMonitor
 from pokegrab.monitors.target import TargetMonitor
 from pokegrab.monitors.walmart import WalmartMonitor
@@ -122,3 +123,35 @@ def test_challenge_pages_are_skipped():
         except BlockedPage:
             continue
         raise AssertionError(f"{monitor.name} parsed a challenge page")
+
+
+def test_ebay_payload_parses_listings():
+    products = parse_ebay_payload(json.loads(load("ebay.json")))
+    by_id = {p.id: p for p in products}
+    assert by_id["v1|123456789|0"].price == 49.99
+    assert by_id["v1|123456789|0"].in_stock is True
+    assert by_id["v1|123456789|0"].store == "eBay"
+    assert by_id["v1|987654321|0"].price == 24.99
+
+
+def test_ebay_search_sends_correct_params():
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/token"):
+            return httpx.Response(200, json={"access_token": "tok", "expires_in": 7200})
+        seen["url"] = str(request.url)
+        seen["auth"] = request.headers.get("authorization", "")
+        return httpx.Response(200, json=json.loads(load("ebay.json")))
+
+    async def scenario():
+        transport = httpx.MockTransport(handler)
+        async with httpx.AsyncClient(transport=transport) as client:
+            monitor = EbayMonitor("id", "secret", price_max=150, pause_seconds=0)
+            return await monitor.search(client, ["elite trainer box"])
+
+    products = asyncio.run(scenario())
+    assert len(products) == 2
+    assert "newlyListed" in seen["url"]
+    assert "FIXED_PRICE" in seen["url"]
+    assert seen["auth"].startswith("Bearer tok")

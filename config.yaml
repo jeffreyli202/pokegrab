@@ -27,5 +27,6 @@ stores:
   pokemoncenter: true
   target: true
   walmart: true
+  ebay: true
 
 database: data/state.db

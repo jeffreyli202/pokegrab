@@ -18,6 +18,8 @@ def settings(**overrides) -> Settings:
         amazon_credential_secret="",
         amazon_partner_tag="",
         amazon_credential_version="3.1",
+        ebay_client_id="",
+        ebay_client_secret="",
     )
     data.update(overrides)
     return Settings(**data)
