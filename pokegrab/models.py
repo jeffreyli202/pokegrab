@@ -10,6 +10,15 @@ class Product:
     url: str
     image: str | None
     in_stock: bool | None
+    msrp: float | None = None
+    shipping: float | None = None
+    edition: str | None = None
+
+    @property
+    def total(self) -> float | None:
+        if self.price is None:
+            return None
+        return self.price + (self.shipping or 0)
 
 
 def dedupe_products(products: list[Product]) -> list[Product]:

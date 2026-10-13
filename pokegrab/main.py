@@ -43,10 +43,23 @@ def build_monitors(settings: Settings) -> list[Monitor]:
     if settings.stores.get("walmart"):
         monitors.append(WalmartMonitor())
     if settings.stores.get("ebay"):
-        if settings.ebay_client_id and settings.ebay_client_secret:
-            monitors.append(EbayMonitor(settings.ebay_client_id, settings.ebay_client_secret, settings.price_max))
-        else:
+        if not (settings.ebay_client_id and settings.ebay_client_secret):
             logger.warning("eBay skipped: set EBAY_CLIENT_ID and EBAY_CLIENT_SECRET")
+        elif not settings.ebay_msrp:
+            logger.warning("eBay skipped: add an ebay.msrp table to config.yaml")
+        else:
+            monitors.append(
+                EbayMonitor(
+                    settings.ebay_client_id,
+                    settings.ebay_client_secret,
+                    settings.ebay_msrp,
+                    settings.ebay_max_markup_percent,
+                    settings.ebay_exclude,
+                    min_percent_of_msrp=settings.ebay_min_percent_of_msrp,
+                    editions=settings.ebay_editions,
+                    extra_searches=settings.ebay_extra_searches,
+                )
+            )
     return monitors
 
 
@@ -71,13 +84,21 @@ async def handle_scan(
         return
 
     logger.info("%s scan found %d products", monitor.name, len(products))
-    alerts = state.observe(monitor.name, products, settings)
+    alerts = state.observe(
+        monitor.name,
+        products,
+        settings,
+        baseline=monitor.baseline_first_scan,
+        dedupe_by_title=monitor.dedupe_by_title,
+    )
     for product in alerts:
         logger.info("restock at %s: %s", product.store, product.name)
         try:
             await notifier.send(client, product)
         except Exception:
-            logger.exception("Discord notify failed for %s", product.name)
+            logger.exception("Discord notify failed for %s; will retry next scan", product.name)
+            continue
+        state.record_alert(monitor.name, product, dedupe_by_title=monitor.dedupe_by_title)
 
 
 async def _poll_forever(
@@ -89,7 +110,7 @@ async def _poll_forever(
 ) -> None:
     while True:
         await handle_scan(monitor, client, state, settings, notifier)
-        await asyncio.sleep(settings.poll_seconds)
+        await asyncio.sleep(settings.poll_seconds_for(monitor.name))
 
 
 async def run(settings: Settings | None = None) -> None:
@@ -111,6 +132,11 @@ async def run(settings: Settings | None = None) -> None:
         try:
             await asyncio.gather(*(_poll_forever(monitor, client, state, settings, notifier) for monitor in monitors))
         finally:
+            for monitor in monitors:
+                try:
+                    await monitor.close()
+                except Exception:
+                    logger.exception("%s did not close cleanly", monitor.name)
             await notifier.notify(client, "🔴 Pokegrab is going offline.")
 
 

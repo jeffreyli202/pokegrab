@@ -18,6 +18,10 @@ class BlockedPage(MonitorError):
 class Monitor:
     name: str
     pause_seconds: float = 1.0
+    baseline_first_scan: bool = True
+    # Marketplace listings change id on relist, so the same product needs a
+    # title-based identity for the cooldown.
+    dedupe_by_title: bool = False
 
     async def search(self, client: httpx.AsyncClient, keywords: list[str]) -> list[Product]:
         found: list[Product] = []
@@ -29,3 +33,6 @@ class Monitor:
 
     async def search_keyword(self, client: httpx.AsyncClient, keyword: str) -> list[Product]:
         raise NotImplementedError
+
+    async def close(self) -> None:
+        return None

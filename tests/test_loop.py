@@ -116,3 +116,31 @@ def test_scan_notifies_only_after_baseline(tmp_path):
     asyncio.run(scenario())
     assert posted == ["2"]
     state.close()
+
+
+def test_failed_discord_post_is_retried_next_scan(tmp_path):
+    config = settings(tmp_path)
+    state = StockState(config.database)
+    monitor = FakeMonitor([])
+    attempts = []
+
+    class FlakyNotifier(DiscordNotifier):
+        async def send(self, client, product):
+            attempts.append(product.id)
+            if len(attempts) == 1:
+                raise RuntimeError("Discord webhook returned 429")
+
+    async def scenario():
+        async with httpx.AsyncClient() as client:
+            notifier = FlakyNotifier(config.discord_webhook_url)
+            await handle_scan(monitor, client, state, config, notifier)
+            monitor.products = [
+                Product("Best Buy", "1", "Pokemon TCG Elite Trainer Box", 49.99, "https://example.com/1", None, True)
+            ]
+            await handle_scan(monitor, client, state, config, notifier)
+            await handle_scan(monitor, client, state, config, notifier)
+            await handle_scan(monitor, client, state, config, notifier)
+
+    asyncio.run(scenario())
+    assert attempts == ["1", "1"]
+    state.close()

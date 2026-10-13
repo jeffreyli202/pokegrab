@@ -28,6 +28,54 @@ def test_payload_includes_store_price_and_link():
     assert embed["thumbnail"]["url"] == "https://example.com/etb.jpg"
 
 
+def ebay_product(price, shipping, msrp=49.99) -> Product:
+    return Product(
+        store="eBay",
+        id="v1|1|0",
+        name="Pokemon TCG Elite Trainer Box",
+        price=price,
+        url="https://www.ebay.com/itm/1",
+        image=None,
+        in_stock=True,
+        msrp=msrp,
+        shipping=shipping,
+    )
+
+
+def test_ebay_payload_shows_markup_over_msrp():
+    description = payload_for(ebay_product(52.99, 2.00))["embeds"][0]["description"]
+    assert "$52.99 + $2.00 shipping = **$54.99**" in description
+    assert "MSRP $49.99" in description
+    assert "+$5.00 (+10.0%) over MSRP" in description
+
+
+def test_ebay_payload_names_the_edition_msrp():
+    item = Product(
+        store="eBay",
+        id="v1|2|0",
+        name="Pokemon Booster Box Japanese",
+        price=45.00,
+        url="https://www.ebay.com/itm/2",
+        image=None,
+        in_stock=True,
+        msrp=37.93,
+        shipping=15.00,
+        edition="japanese",
+    )
+    description = payload_for(item)["embeds"][0]["description"]
+    assert "Japanese MSRP $37.93" in description
+    assert "+$22.07 (+58.2%) over MSRP" in description
+
+
+def test_ebay_payload_shows_under_and_at_msrp():
+    under = payload_for(ebay_product(44.99, 0))["embeds"][0]["description"]
+    assert "with free shipping" in under
+    assert "$5.00 (10.0%) under MSRP" in under
+    at = payload_for(ebay_product(49.99, None))["embeds"][0]["description"]
+    assert "shipping not listed" in at
+    assert "at MSRP" in at
+
+
 def test_send_posts_webhook():
     seen = {}
 
@@ -44,6 +92,49 @@ def test_send_posts_webhook():
     asyncio.run(scenario())
     assert seen["url"] == "https://discord.example/webhook"
     assert b"Elite Trainer Box" in seen["body"]
+
+
+def test_rate_limit_waits_and_retries(monkeypatch):
+    calls = []
+    waits = []
+
+    async def fake_sleep(seconds):
+        waits.append(seconds)
+
+    monkeypatch.setattr("pokegrab.discord.asyncio.sleep", fake_sleep)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        if len(calls) == 1:
+            return httpx.Response(429, json={"retry_after": 1.5})
+        return httpx.Response(204)
+
+    async def scenario():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            await DiscordNotifier("https://discord.example/webhook").send(client, product())
+
+    asyncio.run(scenario())
+    assert len(calls) == 2
+    assert waits == [1.5]
+
+
+def test_rate_limit_gives_up_after_three_tries(monkeypatch):
+    async def fake_sleep(seconds):
+        return None
+
+    monkeypatch.setattr("pokegrab.discord.asyncio.sleep", fake_sleep)
+
+    async def scenario():
+        transport = httpx.MockTransport(lambda request: httpx.Response(429, json={"retry_after": 1}))
+        async with httpx.AsyncClient(transport=transport) as client:
+            await DiscordNotifier("https://discord.example/webhook").send(client, product())
+
+    try:
+        asyncio.run(scenario())
+    except RuntimeError as exc:
+        assert "429" in str(exc)
+    else:
+        raise AssertionError("rate limit was not raised")
 
 
 def test_missing_webhook_does_not_post():
