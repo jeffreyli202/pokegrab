@@ -59,10 +59,12 @@ def payload_for(product: Product) -> dict:
     price = f"${product.price:.2f}" if product.price is not None else "Price unavailable"
     description = f"**{product.store}** · {price}"
     if product.msrp is not None and product.total is not None:
-        description = "\n".join([
-            f"**{product.store}** · {_price_with_shipping(product)}",
-            f"{_msrp_label(product)} ${product.msrp:.2f} · {_markup_text(product.total, product.msrp)}",
-        ])
+        description = "\n".join(
+            [
+                f"**{product.store}** · {_price_with_shipping(product)}",
+                f"{_msrp_label(product)} ${product.msrp:.2f} · {_markup_text(product.total, product.msrp)}",
+            ]
+        )
     embed = {
         "title": product.name[:256],
         "url": product.url,

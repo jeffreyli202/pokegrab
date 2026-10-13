@@ -59,13 +59,15 @@ class EbayMonitor(Monitor):
     async def search_keyword(self, client: httpx.AsyncClient, keyword: str) -> list[Product]:
         token = await self._access_token(client)
         query = keyword if name_matches(keyword, ["pokemon"], []) else f"pokemon {keyword}"
-        filters = ",".join([
-            f"price:[0..{self._search_ceiling()}]",
-            "priceCurrency:USD",
-            "buyingOptions:{FIXED_PRICE}",
-            "conditions:{NEW}",
-            "deliveryCountry:US",
-        ])
+        filters = ",".join(
+            [
+                f"price:[0..{self._search_ceiling()}]",
+                "priceCurrency:USD",
+                "buyingOptions:{FIXED_PRICE}",
+                "conditions:{NEW}",
+                "deliveryCountry:US",
+            ]
+        )
         response = await client.get(
             SEARCH_URL,
             headers={
@@ -128,9 +130,7 @@ def _oauth_reason(response: httpx.Response) -> str:
         return ""
     if not isinstance(payload, dict):
         return ""
-    reason = " ".join(
-        str(payload[key]) for key in ("error", "error_description") if isinstance(payload.get(key), str)
-    )
+    reason = " ".join(str(payload[key]) for key in ("error", "error_description") if isinstance(payload.get(key), str))
     return f": {reason}" if reason else ""
 
 

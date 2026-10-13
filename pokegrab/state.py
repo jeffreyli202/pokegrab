@@ -10,9 +10,33 @@ from pokegrab.models import Product
 
 # Words sellers pad titles with that do not change which product it is.
 _FILLER = {
-    "a", "and", "authentic", "brand", "english", "factory", "fast", "for", "free", "hand",
-    "in", "new", "nib", "nisb", "of", "official", "pokemon", "sealed", "ship", "ships",
-    "shipping", "tcg", "the", "us", "usa", "w", "with",
+    "a",
+    "and",
+    "authentic",
+    "brand",
+    "english",
+    "factory",
+    "fast",
+    "for",
+    "free",
+    "hand",
+    "in",
+    "new",
+    "nib",
+    "nisb",
+    "of",
+    "official",
+    "pokemon",
+    "sealed",
+    "ship",
+    "ships",
+    "shipping",
+    "tcg",
+    "the",
+    "us",
+    "usa",
+    "w",
+    "with",
 }
 
 
@@ -95,9 +119,7 @@ class StockState:
                 self._set(store, product.id, False)
                 continue
             # A listing priced against MSRP has already passed a stricter check.
-            in_range = product.msrp is not None or price_in_range(
-                product.price, settings.price_min, settings.price_max
-            )
+            in_range = product.msrp is not None or price_in_range(product.price, settings.price_min, settings.price_max)
             if product.in_stock is not True or not in_range or previous is True:
                 continue
             keys = alert_keys(product, dedupe_by_title)

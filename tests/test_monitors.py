@@ -212,9 +212,7 @@ def test_ebay_price_floor_can_be_turned_off():
             return httpx.Response(200, json=json.loads(load("ebay.json")))
 
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            monitor = EbayMonitor(
-                "id", "secret", EBAY_MSRP, 15, ["empty"], pause_seconds=0, min_percent_of_msrp=0
-            )
+            monitor = EbayMonitor("id", "secret", EBAY_MSRP, 15, ["empty"], pause_seconds=0, min_percent_of_msrp=0)
             return await monitor.search(client, ["elite trainer box"])
 
     assert "v1|910|0" in {p.id for p in asyncio.run(scenario())}
@@ -284,9 +282,7 @@ def test_asian_edition_markup_is_applied_per_listing():
             )
 
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            monitor = EbayMonitor(
-                "id", "secret", {"booster box": 161.64}, 15, [], pause_seconds=0, editions=EDITIONS
-            )
+            monitor = EbayMonitor("id", "secret", {"booster box": 161.64}, 15, [], pause_seconds=0, editions=EDITIONS)
             return await monitor.search_keyword(client, "booster box")
 
     assert {p.id for p in asyncio.run(scenario())} == {"jp-ok"}
