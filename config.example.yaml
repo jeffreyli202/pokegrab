@@ -1,5 +1,14 @@
 # Seconds between scans of each store. Values under 60 are raised to 60.
-poll_seconds: 180
+poll_seconds: 60
+
+# Per-store overrides of poll_seconds. eBay allows about 5,000 API calls a day
+# and each scan makes one call per keyword and extra search; page stores block
+# frequent visitors.
+store_poll_seconds:
+  ebay: 240
+  pokemoncenter: 180
+  target: 90
+  walmart: 90
 
 # Skip cheap accessories. Omit price_max to allow any higher price.
 price_min: 10
@@ -27,5 +36,93 @@ stores:
   pokemoncenter: true
   target: true
   walmart: true
+  ebay: true
 
 database: data/state.db
+
+# After a product is posted, skip repeat alerts for it for this many hours,
+# even if it restocks or is relisted. 0 turns the cooldown off.
+alert_cooldown_hours: 6
+
+# eBay posts Pokemon listings whose price plus shipping is at or slightly above
+# MSRP. A listing whose title matches none of the msrp entries is ignored.
+ebay:
+  # 15 allows a $49.99 ETB up to $57.49 shipped.
+  max_markup_percent: 15
+  # Skip listings under this share of MSRP. Those are almost always a single
+  # accessory (dice, playmat, sleeves) sold out of the box the title names.
+  min_percent_of_msrp: 60
+  # US MSRP by product type. The longest matching phrase wins, so the
+  # Pokemon Center ETB is checked before the standard ETB.
+  msrp:
+    pokemon center elite trainer box: 59.99
+    elite trainer box: 49.99
+    booster bundle: 26.94
+    booster box: 161.64
+    ultra premium collection: 179.99
+    collection box: 29.99
+    mini tin: 9.99
+    tin: 26.99
+  # Asian-language prints. A title with one of the words uses that table
+  # instead of the US one, and is skipped if its product type is not listed.
+  # Prices are home retail converted to dollars (Oct 2026: 158 yen, 1,334 won
+  # per dollar). The higher markup leaves room for shipping from Asia.
+  editions:
+    japanese:
+      words: [japanese, japan, jpn, jp]
+      max_markup_percent: 60
+      msrp:
+        30th celebration booster box: 45.51   # 7,200 yen, 20 packs
+        premium trainer box: 40.14            # 6,350 yen
+        booster box: 37.93                    # 6,000 yen, 30 packs
+        high class pack: 34.77                # 5,500 yen box, 10 packs
+        special card set: 12.52               # 1,980 yen
+        starter set: 11.38                    # 1,800 yen
+    korean:
+      words: [korean, korea, kor, kr]
+      max_markup_percent: 60
+      msrp:
+        high class pack: 37.48                # 50,000 won box
+        booster box: 22.49                    # 30,000 won
+    chinese:
+      words: [chinese]
+      # Already a US import-shop price, so it gets the normal markup.
+      max_markup_percent: 15
+      msrp:
+        30th celebration booster box: 129.99  # Simplified Chinese, 20 packs
+  # Searched on eBay only, on top of the keywords above.
+  extra_searches:
+    - japanese booster box
+    - high class pack
+    - premium trainer box
+    - korean booster box
+    - chinese booster box
+  exclude:
+    - empty
+    - opened
+    - box only
+    - no packs
+    - lot
+    - case
+    - proxy
+    - custom
+    - repack
+    - damaged
+    # Accessories sold separately from the box they came in
+    - playmat
+    - play mat
+    - dice
+    - sleeves
+    - divider
+    - dividers
+    - energy cards
+    - coin
+    - damage counters
+    - player's guide
+    - storage box
+    - deck box
+    - no cards
+    - no boosters
+    - promo only
+    - card only
+    - dice only

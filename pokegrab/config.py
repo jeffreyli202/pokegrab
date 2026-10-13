@@ -1,12 +1,21 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
 from dotenv import load_dotenv
 
-STORE_NAMES = ("bestbuy", "amazon", "pokemoncenter", "target", "walmart")
+STORE_NAMES = ("bestbuy", "amazon", "pokemoncenter", "target", "walmart", "ebay")
 MIN_POLL_SECONDS = 60
+
+
+@dataclass(frozen=True)
+class EditionRule:
+    """Prices for a non-English print run, picked when its words appear in a title."""
+
+    words: list[str]
+    msrp: dict[str, float]
+    max_markup_percent: float
 
 
 @dataclass(frozen=True)
@@ -24,6 +33,19 @@ class Settings:
     amazon_credential_secret: str
     amazon_partner_tag: str
     amazon_credential_version: str
+    ebay_client_id: str
+    ebay_client_secret: str
+    alert_cooldown_hours: float = 6.0
+    ebay_max_markup_percent: float = 15.0
+    ebay_min_percent_of_msrp: float = 60.0
+    ebay_msrp: dict[str, float] = field(default_factory=dict)
+    ebay_exclude: list[str] = field(default_factory=list)
+    ebay_editions: dict[str, EditionRule] = field(default_factory=dict)
+    ebay_extra_searches: list[str] = field(default_factory=list)
+    store_poll_seconds: dict[str, int] = field(default_factory=dict)
+
+    def poll_seconds_for(self, store: str) -> int:
+        return self.store_poll_seconds.get(store, self.poll_seconds)
 
 
 def load_settings(path: Path | None = None, *, load_env: bool = True) -> Settings:
@@ -46,9 +68,22 @@ def load_settings(path: Path | None = None, *, load_env: bool = True) -> Setting
         if name in stores:
             stores[name] = bool(enabled)
 
-    poll_seconds = int(raw.get("poll_seconds", 180))
-    if poll_seconds < MIN_POLL_SECONDS:
-        poll_seconds = MIN_POLL_SECONDS
+    poll_seconds = max(int(raw.get("poll_seconds", 180)), MIN_POLL_SECONDS)
+    store_poll_seconds = _store_poll_seconds(raw.get("store_poll_seconds"))
+
+    cooldown = float(raw.get("alert_cooldown_hours", 6))
+    if cooldown < 0:
+        raise ValueError("config alert_cooldown_hours cannot be negative")
+
+    ebay = raw.get("ebay") or {}
+    if not isinstance(ebay, dict):
+        raise ValueError("config ebay must be a mapping")
+    markup = float(ebay.get("max_markup_percent", 15))
+    if markup < 0:
+        raise ValueError("config ebay.max_markup_percent cannot be negative")
+    floor = float(ebay.get("min_percent_of_msrp", 60))
+    if not 0 <= floor <= 100:
+        raise ValueError("config ebay.min_percent_of_msrp must be between 0 and 100")
 
     return Settings(
         poll_seconds=poll_seconds,
@@ -64,7 +99,54 @@ def load_settings(path: Path | None = None, *, load_env: bool = True) -> Setting
         amazon_credential_secret=os.environ.get("AMAZON_CREDENTIAL_SECRET", "").strip(),
         amazon_partner_tag=os.environ.get("AMAZON_PARTNER_TAG", "").strip(),
         amazon_credential_version=os.environ.get("AMAZON_CREDENTIAL_VERSION", "3.1").strip() or "3.1",
+        ebay_client_id=os.environ.get("EBAY_CLIENT_ID", "").strip(),
+        ebay_client_secret=os.environ.get("EBAY_CLIENT_SECRET", "").strip(),
+        alert_cooldown_hours=cooldown,
+        ebay_max_markup_percent=markup,
+        ebay_min_percent_of_msrp=floor,
+        ebay_msrp=_price_table(ebay.get("msrp"), "ebay.msrp"),
+        ebay_exclude=_string_list(ebay.get("exclude"), "ebay.exclude"),
+        ebay_editions=_editions(ebay.get("editions"), markup),
+        ebay_extra_searches=_string_list(ebay.get("extra_searches"), "ebay.extra_searches"),
+        store_poll_seconds=store_poll_seconds,
     )
+
+
+def _store_poll_seconds(value: object) -> dict[str, int]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("config store_poll_seconds must map store names to seconds")
+    overrides = {}
+    for name, seconds in value.items():
+        if name not in STORE_NAMES:
+            raise ValueError(f"config store_poll_seconds has unknown store {name!r}")
+        overrides[name] = max(int(seconds), MIN_POLL_SECONDS)
+    return overrides
+
+
+def _editions(value: object, default_markup: float) -> dict[str, EditionRule]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("config ebay.editions must be a mapping")
+    editions = {}
+    for name, rule in value.items():
+        label = f"ebay.editions.{name}"
+        if not isinstance(rule, dict):
+            raise ValueError(f"config {label} must be a mapping")
+        words = _string_list(rule.get("words"), f"{label}.words")
+        if not words:
+            raise ValueError(f"config {label}.words must list at least one word")
+        markup = float(rule.get("max_markup_percent", default_markup))
+        if markup < 0:
+            raise ValueError(f"config {label}.max_markup_percent cannot be negative")
+        editions[str(name)] = EditionRule(
+            words=words,
+            msrp=_price_table(rule.get("msrp"), f"{label}.msrp"),
+            max_markup_percent=markup,
+        )
+    return editions
 
 
 def _default_config_path() -> Path:
@@ -83,6 +165,22 @@ def _string_list(value: object, label: str) -> list[str]:
     if not isinstance(value, list) or not all(isinstance(item, str) and item.strip() for item in value):
         raise ValueError(f"config {label} must be a list of strings")
     return [item.strip() for item in value]
+
+
+def _price_table(value: object, label: str) -> dict[str, float]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError(f"config {label} must map product names to prices")
+    table = {}
+    for name, price in value.items():
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError(f"config {label} has an empty product name")
+        amount = float(price)
+        if amount <= 0:
+            raise ValueError(f"config {label} price for {name!r} must be above zero")
+        table[name.strip()] = amount
+    return table
 
 
 def _optional_float(value: object) -> float | None:

@@ -1,4 +1,16 @@
-from pokegrab.match import name_matches, price_in_range
+from pokegrab.match import msrp_for, name_matches, price_in_range
+
+
+def test_msrp_prefers_longest_product_type():
+    table = {"elite trainer box": 49.99, "pokemon center elite trainer box": 59.99, "tin": 26.99, "mini tin": 9.99}
+    assert msrp_for("Pokemon Center Elite Trainer Box", table) == 59.99
+    assert msrp_for("Pokemon Elite Trainer Box", table) == 49.99
+    assert msrp_for("Pokemon Mini Tin Pikachu", table) == 9.99
+    assert msrp_for("Pokemon booster pack", table) is None
+
+
+def test_hyphen_and_accent_variants_match():
+    assert name_matches("Pokémon Ultra-Premium Collection", ["pokemon ultra premium collection"], [])
 
 
 def test_phrase_keyword_matches():

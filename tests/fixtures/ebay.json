@@ -1,0 +1,75 @@
+{
+  "total": 8,
+  "itemSummaries": [
+    {
+      "itemId": "v1|100|0",
+      "title": "Pokemon TCG Elite Trainer Box Scarlet Violet NEW SEALED",
+      "price": { "value": "49.99", "currency": "USD" },
+      "shippingOptions": [{ "shippingCostType": "FIXED", "shippingCost": { "value": "0.00", "currency": "USD" } }],
+      "itemWebUrl": "https://www.ebay.com/itm/100",
+      "image": { "imageUrl": "https://example.com/etb.jpg" }
+    },
+    {
+      "itemId": "v1|200|0",
+      "title": "Pokémon Booster Bundle Factory Sealed",
+      "price": { "value": "24.99", "currency": "USD" },
+      "shippingOptions": [
+        { "shippingCostType": "FIXED", "shippingCost": { "value": "6.50", "currency": "USD" } },
+        { "shippingCostType": "FIXED", "shippingCost": { "value": "4.00", "currency": "USD" } }
+      ],
+      "itemWebUrl": "https://www.ebay.com/itm/200",
+      "image": { "imageUrl": "https://example.com/bundle.jpg" }
+    },
+    {
+      "itemId": "v1|300|0",
+      "title": "Pokemon Center Elite Trainer Box 30th Celebration",
+      "price": { "value": "64.99", "currency": "USD" },
+      "itemWebUrl": "https://www.ebay.com/itm/300"
+    },
+    {
+      "itemId": "v1|400|0",
+      "title": "Pokemon Elite Trainer Box 30th Celebration Sealed",
+      "price": { "value": "139.99", "currency": "USD" },
+      "shippingOptions": [{ "shippingCostType": "FIXED", "shippingCost": { "value": "0.00", "currency": "USD" } }],
+      "itemWebUrl": "https://www.ebay.com/itm/400"
+    },
+    {
+      "itemId": "v1|500|0",
+      "title": "Pokemon Elite Trainer Box EMPTY no cards",
+      "price": { "value": "9.99", "currency": "USD" },
+      "itemWebUrl": "https://www.ebay.com/itm/500"
+    },
+    {
+      "itemId": "v1|600|0",
+      "title": "Yu-Gi-Oh Elite Trainer Box style storage",
+      "price": { "value": "19.99", "currency": "USD" },
+      "itemWebUrl": "https://www.ebay.com/itm/600"
+    },
+    {
+      "itemId": "v1|700|0",
+      "title": "Pokemon single booster pack",
+      "price": { "value": "4.99", "currency": "USD" },
+      "itemWebUrl": "https://www.ebay.com/itm/700"
+    },
+    {
+      "itemId": "v1|900|0",
+      "title": "Pokemon Elite Trainer Box Playmat 30th Celebration",
+      "price": { "value": "44.99", "currency": "USD" },
+      "itemWebUrl": "https://www.ebay.com/itm/900"
+    },
+    {
+      "itemId": "v1|910|0",
+      "title": "Pokemon Elite Trainer Box Nidorina Full Art Promo",
+      "price": { "value": "8.99", "currency": "USD" },
+      "shippingOptions": [{ "shippingCostType": "FIXED", "shippingCost": { "value": "1.00", "currency": "USD" } }],
+      "itemWebUrl": "https://www.ebay.com/itm/910"
+    },
+    {
+      "itemId": "v1|800|0",
+      "title": "Pokemon Mini Tin Day Pikachu",
+      "price": { "value": "9.99", "currency": "USD" },
+      "shippingOptions": [{ "shippingCostType": "FIXED", "shippingCost": { "value": "1.00", "currency": "USD" } }],
+      "itemWebUrl": "https://www.ebay.com/itm/800"
+    }
+  ]
+}
