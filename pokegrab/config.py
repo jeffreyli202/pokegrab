@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 
-STORE_NAMES = ("bestbuy", "amazon", "pokemoncenter", "target", "walmart", "ebay")
+STORE_NAMES = ("bestbuy", "amazon", "pokemoncenter", "target", "walmart", "ebay", "dollargeneral")
 MIN_POLL_SECONDS = 60
 
 
@@ -43,6 +43,10 @@ class Settings:
     ebay_editions: dict[str, EditionRule] = field(default_factory=dict)
     ebay_extra_searches: list[str] = field(default_factory=list)
     store_poll_seconds: dict[str, int] = field(default_factory=dict)
+    dollargeneral_stores: dict[str, str] = field(default_factory=dict)
+    dollargeneral_search: str = "pokemon"
+    dollargeneral_include: list[str] = field(default_factory=list)
+    discord_ebay_webhook_url: str = ""
 
     def poll_seconds_for(self, store: str) -> int:
         return self.store_poll_seconds.get(store, self.poll_seconds)
@@ -85,6 +89,10 @@ def load_settings(path: Path | None = None, *, load_env: bool = True) -> Setting
     if not 0 <= floor <= 100:
         raise ValueError("config ebay.min_percent_of_msrp must be between 0 and 100")
 
+    dollargeneral = raw.get("dollargeneral") or {}
+    if not isinstance(dollargeneral, dict):
+        raise ValueError("config dollargeneral must be a mapping")
+
     return Settings(
         poll_seconds=poll_seconds,
         price_min=_optional_float(raw.get("price_min")),
@@ -94,6 +102,7 @@ def load_settings(path: Path | None = None, *, load_env: bool = True) -> Setting
         stores=stores,
         database=str(raw.get("database") or "data/state.db"),
         discord_webhook_url=os.environ.get("DISCORD_WEBHOOK_URL", "").strip(),
+        discord_ebay_webhook_url=os.environ.get("DISCORD_EBAY_WEBHOOK_URL", "").strip(),
         bestbuy_api_key=os.environ.get("BESTBUY_API_KEY", "").strip(),
         amazon_credential_id=os.environ.get("AMAZON_CREDENTIAL_ID", "").strip(),
         amazon_credential_secret=os.environ.get("AMAZON_CREDENTIAL_SECRET", "").strip(),
@@ -109,7 +118,24 @@ def load_settings(path: Path | None = None, *, load_env: bool = True) -> Setting
         ebay_editions=_editions(ebay.get("editions"), markup),
         ebay_extra_searches=_string_list(ebay.get("extra_searches"), "ebay.extra_searches"),
         store_poll_seconds=store_poll_seconds,
+        dollargeneral_stores=_store_numbers(dollargeneral.get("stores")),
+        dollargeneral_search=str(dollargeneral.get("search") or "pokemon").strip(),
+        dollargeneral_include=_string_list(dollargeneral.get("include"), "dollargeneral.include"),
     )
+
+
+def _store_numbers(value: object) -> dict[str, str]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("config dollargeneral.stores must map store numbers to labels")
+    stores = {}
+    for number, label in value.items():
+        number = str(number).strip()
+        if not number.isdigit():
+            raise ValueError(f"config dollargeneral.stores has a non-numeric store number {number!r}")
+        stores[number] = str(label or f"Store {number}").strip()
+    return stores
 
 
 def _store_poll_seconds(value: object) -> dict[str, int]:

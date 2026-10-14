@@ -22,6 +22,9 @@ class Monitor:
     # Marketplace listings change id on relist, so the same product needs a
     # title-based identity for the cooldown.
     dedupe_by_title: bool = False
+    # The monitor picks its own products, so the global keywords and price
+    # range do not apply to it.
+    prefiltered: bool = False
 
     async def search(self, client: httpx.AsyncClient, keywords: list[str]) -> list[Product]:
         found: list[Product] = []

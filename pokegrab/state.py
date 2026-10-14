@@ -98,6 +98,7 @@ class StockState:
         *,
         baseline: bool = True,
         dedupe_by_title: bool = False,
+        prefiltered: bool = False,
     ) -> list[Product]:
         """Return products worth posting. Call record_alert once each one is sent."""
         baselined = not baseline or self._is_baselined(store)
@@ -106,7 +107,7 @@ class StockState:
         alerts: list[Product] = []
         for product in products:
             # A listing matched to an MSRP entry already names a known product type.
-            if product.msrp is not None:
+            if prefiltered or product.msrp is not None:
                 if name_matches(product.name, settings.exclude, []):
                     continue
             elif not name_matches(product.name, settings.keywords, settings.exclude):
@@ -119,7 +120,11 @@ class StockState:
                 self._set(store, product.id, False)
                 continue
             # A listing priced against MSRP has already passed a stricter check.
-            in_range = product.msrp is not None or price_in_range(product.price, settings.price_min, settings.price_max)
+            in_range = (
+                prefiltered
+                or product.msrp is not None
+                or price_in_range(product.price, settings.price_min, settings.price_max)
+            )
             if product.in_stock is not True or not in_range or previous is True:
                 continue
             keys = alert_keys(product, dedupe_by_title)

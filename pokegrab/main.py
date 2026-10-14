@@ -8,6 +8,7 @@ from pokegrab.discord import DiscordNotifier
 from pokegrab.monitors.amazon import AmazonMonitor
 from pokegrab.monitors.base import USER_AGENT, Monitor, MonitorError
 from pokegrab.monitors.bestbuy import BestBuyMonitor
+from pokegrab.monitors.dollargeneral import DollarGeneralMonitor
 from pokegrab.monitors.ebay import EbayMonitor
 from pokegrab.monitors.pokemoncenter import PokemonCenterMonitor
 from pokegrab.monitors.target import TargetMonitor
@@ -42,6 +43,17 @@ def build_monitors(settings: Settings) -> list[Monitor]:
         monitors.append(TargetMonitor())
     if settings.stores.get("walmart"):
         monitors.append(WalmartMonitor())
+    if settings.stores.get("dollargeneral"):
+        if settings.dollargeneral_stores:
+            monitors.append(
+                DollarGeneralMonitor(
+                    settings.dollargeneral_stores,
+                    settings.dollargeneral_search,
+                    settings.dollargeneral_include,
+                )
+            )
+        else:
+            logger.warning("Dollar General skipped: add store numbers under dollargeneral.stores in config.yaml")
     if settings.stores.get("ebay"):
         if not (settings.ebay_client_id and settings.ebay_client_secret):
             logger.warning("eBay skipped: set EBAY_CLIENT_ID and EBAY_CLIENT_SECRET")
@@ -90,6 +102,7 @@ async def handle_scan(
         settings,
         baseline=monitor.baseline_first_scan,
         dedupe_by_title=monitor.dedupe_by_title,
+        prefiltered=monitor.prefiltered,
     )
     for product in alerts:
         logger.info("restock at %s: %s", product.store, product.name)
@@ -113,6 +126,23 @@ async def _poll_forever(
         await asyncio.sleep(settings.poll_seconds_for(monitor.name))
 
 
+def notifier_for(monitor: Monitor, settings: Settings, default: DiscordNotifier) -> DiscordNotifier:
+    if monitor.name == "ebay" and settings.discord_ebay_webhook_url:
+        return DiscordNotifier(settings.discord_ebay_webhook_url)
+    return default
+
+
+def channel_groups(
+    monitors: list[Monitor], settings: Settings, default: DiscordNotifier
+) -> list[tuple[DiscordNotifier, list[Monitor]]]:
+    """Group monitors by the Discord webhook their alerts post to."""
+    groups: dict[str, tuple[DiscordNotifier, list[Monitor]]] = {}
+    for monitor in monitors:
+        channel = notifier_for(monitor, settings, default)
+        groups.setdefault(channel.webhook_url, (channel, []))[1].append(monitor)
+    return list(groups.values())
+
+
 async def run(settings: Settings | None = None) -> None:
     settings = settings or load_settings()
     state = StockState(settings.database)
@@ -122,22 +152,31 @@ async def run(settings: Settings | None = None) -> None:
         raise SystemExit("No stores are enabled.")
     if not settings.discord_webhook_url:
         logger.warning("DISCORD_WEBHOOK_URL is empty; scans will run but alerts will not post")
-    store_list = ", ".join(m.name for m in monitors)
+    channels = channel_groups(monitors, settings, notifier)
     async with httpx.AsyncClient(
         timeout=httpx.Timeout(20.0),
         headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/json"},
         follow_redirects=True,
     ) as client:
-        await notifier.notify(client, f"👋 Pokegrab is online! Monitoring: {store_list}!")
+        for channel, members in channels:
+            store_list = ", ".join(m.name for m in members)
+            await channel.notify(client, f"👋 Pokegrab is online! Monitoring: {store_list}!")
         try:
-            await asyncio.gather(*(_poll_forever(monitor, client, state, settings, notifier) for monitor in monitors))
+            await asyncio.gather(
+                *(
+                    _poll_forever(monitor, client, state, settings, channel)
+                    for channel, members in channels
+                    for monitor in members
+                )
+            )
         finally:
             for monitor in monitors:
                 try:
                     await monitor.close()
                 except Exception:
                     logger.exception("%s did not close cleanly", monitor.name)
-            await notifier.notify(client, "🔴 Pokegrab is going offline.")
+            for channel, _ in channels:
+                await channel.notify(client, "🔴 Pokegrab is going offline.")
 
 
 def main() -> None:

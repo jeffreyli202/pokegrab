@@ -58,6 +58,8 @@ def _retry_after(response: httpx.Response) -> float:
 def payload_for(product: Product) -> dict:
     price = f"${product.price:.2f}" if product.price is not None else "Price unavailable"
     description = f"**{product.store}** · {price}"
+    if product.quantity is not None:
+        description += f"\n{product.quantity} on the shelf (store's count)"
     if product.msrp is not None and product.total is not None:
         description = "\n".join(
             [

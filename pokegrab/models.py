@@ -13,6 +13,7 @@ class Product:
     msrp: float | None = None
     shipping: float | None = None
     edition: str | None = None
+    quantity: int | None = None
 
     @property
     def total(self) -> float | None:

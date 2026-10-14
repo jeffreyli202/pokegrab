@@ -5,7 +5,7 @@ import httpx
 
 from pokegrab.config import Settings
 from pokegrab.discord import DiscordNotifier
-from pokegrab.main import build_monitors, handle_scan
+from pokegrab.main import build_monitors, channel_groups, handle_scan, notifier_for
 from pokegrab.models import Product
 from pokegrab.monitors.base import BlockedPage, Monitor
 from pokegrab.state import StockState
@@ -59,6 +59,40 @@ def test_missing_api_keys_skip_those_stores(tmp_path, caplog):
     assert monitors == []
     assert "BESTBUY_API_KEY" in caplog.text
     assert "AMAZON_PARTNER_TAG" in caplog.text
+
+
+def test_ebay_alerts_use_their_own_webhook_when_set(tmp_path):
+    default = DiscordNotifier("https://discord.example/retail")
+    ebay = FakeMonitor()
+    ebay.name = "ebay"
+    retail = FakeMonitor()
+
+    separate = settings(tmp_path, discord_ebay_webhook_url="https://discord.example/ebay")
+    assert notifier_for(ebay, separate, default).webhook_url == "https://discord.example/ebay"
+    assert notifier_for(retail, separate, default) is default
+
+    shared = settings(tmp_path)
+    assert notifier_for(ebay, shared, default) is default
+
+
+def test_each_channel_gets_its_own_store_list(tmp_path):
+    default = DiscordNotifier("https://discord.example/retail")
+    ebay = FakeMonitor()
+    ebay.name = "ebay"
+    target = FakeMonitor()
+    target.name = "target"
+
+    separate = settings(tmp_path, discord_ebay_webhook_url="https://discord.example/ebay")
+    groups = channel_groups([target, ebay], separate, default)
+    assert [(c.webhook_url, [m.name for m in members]) for c, members in groups] == [
+        ("https://discord.example/retail", ["target"]),
+        ("https://discord.example/ebay", ["ebay"]),
+    ]
+
+    shared = channel_groups([target, ebay], settings(tmp_path), default)
+    assert [(c.webhook_url, [m.name for m in members]) for c, members in shared] == [
+        ("https://discord.example/retail", ["target", "ebay"]),
+    ]
 
 
 def test_blocked_scan_does_not_baseline(tmp_path):

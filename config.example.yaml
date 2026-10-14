@@ -9,6 +9,7 @@ store_poll_seconds:
   pokemoncenter: 180
   target: 90
   walmart: 90
+  dollargeneral: 300
 
 # Skip cheap accessories. Omit price_max to allow any higher price.
 price_min: 10
@@ -37,8 +38,24 @@ stores:
   target: true
   walmart: true
   ebay: true
+  dollargeneral: true
 
 database: data/state.db
+
+# Dollar General shelf counts at specific stores. Ignores the keywords and
+# price_min above, since its Pokemon stock is mostly packs and tins under $10.
+# Store numbers are the last part of the store's page URL in the store directory,
+# e.g. dollargeneral.com/store-directory/ca/stockton/13585.
+dollargeneral:
+  search: pokemon
+  # A Pokemon item must also contain one of these, which skips candy and toys.
+  include: [trading card, tcg, booster, card pack, tin]
+  stores:
+    13585: 4115 N El Dorado St, Stockton
+    13592: 4232 E Main St, Stockton
+    13593: 2150 W Alpine Ave, Stockton
+    13632: 2907 E Waterloo Rd, Stockton
+    25626: 310 W Dr Martin Luther King Jr Blvd, Stockton
 
 # After a product is posted, skip repeat alerts for it for this many hours,
 # even if it restocks or is relisted. 0 turns the cooldown off.
@@ -52,15 +69,30 @@ ebay:
   # Skip listings under this share of MSRP. Those are almost always a single
   # accessory (dice, playmat, sleeves) sold out of the box the title names.
   min_percent_of_msrp: 60
-  # US MSRP by product type. The longest matching phrase wins, so the
-  # Pokemon Center ETB is checked before the standard ETB.
+  # US MSRP by product type (checked Oct 2026). The longest matching phrase
+  # wins, so "knock out collection" beats the generic "collection box".
   msrp:
     pokemon center elite trainer box: 59.99
     elite trainer box: 49.99
-    booster bundle: 26.94
-    booster box: 161.64
-    ultra premium collection: 179.99
-    collection box: 29.99
+    booster bundle: 26.94                # 6 packs at $4.49
+    booster box: 161.64                  # 36 packs at $4.49
+    ultra premium collection: 179.99     # older 16-18 pack UPCs were $119.99
+    super premium collection: 89.99      # Charizard ex $79.99, Prismatic Evolutions $89.99
+    premium collection: 39.99            # some run up to $59.99
+    binder collection: 31.99
+    figure collection: 29.99
+    poster collection: 14.99
+    tech sticker collection: 14.99
+    knock out collection: 9.99
+    knockout collection: 9.99
+    ex box: 21.99
+    build & battle box: 21.99
+    build and battle box: 21.99
+    battle deck: 19.99
+    3 pack blister: 13.99
+    2 pack blister: 9.99
+    collection box: 29.99                # fallback for collections not listed above
+    ex tin: 21.99
     mini tin: 9.99
     tin: 26.99
   # Asian-language prints. A title with one of the words uses that table
@@ -72,12 +104,12 @@ ebay:
       words: [japanese, japan, jpn, jp]
       max_markup_percent: 60
       msrp:
-        30th celebration booster box: 45.51   # 7,200 yen, 20 packs
-        premium trainer box: 40.14            # 6,350 yen
-        booster box: 37.93                    # 6,000 yen, 30 packs
-        high class pack: 34.77                # 5,500 yen box, 10 packs
-        special card set: 12.52               # 1,980 yen
-        starter set: 11.38                    # 1,800 yen
+        30th celebration booster box: 45.57   # 7,200 yen, 20 packs
+        premium trainer box: 40.19            # 6,350 yen
+        booster box: 37.97                    # 6,000 yen, 30 packs (5,400 for sets before May 2026)
+        high class pack: 34.81                # 5,500 yen box, 10 packs
+        special card set: 12.53               # 1,980 yen
+        starter set: 11.39                    # 1,800 yen
     korean:
       words: [korean, korea, kor, kr]
       max_markup_percent: 60
