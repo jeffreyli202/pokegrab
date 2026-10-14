@@ -181,6 +181,8 @@ async def run(settings: Settings | None = None) -> None:
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    # httpx logs every request URL, which includes the secret Discord webhook token.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     try:
         asyncio.run(run())
     except KeyboardInterrupt:

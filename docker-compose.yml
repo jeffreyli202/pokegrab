@@ -4,7 +4,15 @@ services:
     env_file: .env
     volumes:
       - pokegrab-data:/app/data
+      # Edit settings without rebuilding; restart the container to apply them.
+      - ./config.yaml:/app/config.yaml:ro
+    # Chromium crashes with Docker's default 64 MB of shared memory.
+    shm_size: "1gb"
     restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   pokegrab-data:
